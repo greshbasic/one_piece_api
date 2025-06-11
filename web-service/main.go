@@ -1,8 +1,7 @@
 package main
 
 func main() {
-	// dbCharacters = setupCharactersDB()
-	dbDevilFruits = setupDevilFruitsDB()
+	db = setupDB()
 
 	router_setup()
 }

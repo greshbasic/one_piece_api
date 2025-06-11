@@ -5,6 +5,8 @@ type DevilFruitType string
 const (
 	Paramecia DevilFruitType = "paramecia"
 	Zoan      DevilFruitType = "zoan"
+	Ancient   DevilFruitType = "ancient zoan"
+	Mythical  DevilFruitType = "mythical zoan"
 	Logia     DevilFruitType = "logia"
 )
 

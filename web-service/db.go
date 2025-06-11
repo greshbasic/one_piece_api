@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"log"
 
@@ -10,8 +11,7 @@ import (
 	"github.com/go-sql-driver/mysql"
 )
 
-// var dbCharacters *sql.DB
-var dbDevilFruits *sql.DB
+var db *sql.DB
 
 // func characterByID(id int64) (model.Character, error) {
 // 	var c model.Character
@@ -29,36 +29,162 @@ var dbDevilFruits *sql.DB
 func devilFruitByID(id string) (model.DevilFruit, error) {
 	var df model.DevilFruit
 
-	row := dbDevilFruits.QueryRow("SELECT id, name, type, awakened, user_id FROM devil_fruits WHERE id = ?", id)
+	row := db.QueryRow("SELECT id, name, type, awakened, user_id FROM devil_fruits WHERE id = ?", id)
 	if err := row.Scan(&df.ID, &df.Name, &df.Type, &df.Awakened, &df.UserID); err != nil {
 		if err == sql.ErrNoRows {
 			return df, fmt.Errorf("devilFruitByID %s: no such devil fruit", id)
 		}
-		return df, fmt.Errorf("devilFruitByID %s: %v", id, err)
+		return df, err
 	}
 	return df, nil
 }
 
-func setupCharactersDB() *sql.DB {
-	cfg := mysql.NewConfig()
-	cfg.User = "root"
-	cfg.Passwd = "bugs"
-	cfg.Net = "tcp"
-	cfg.Addr = "127.0.0.1:3306"
-	cfg.DBName = "characters"
+func allDevilFruits() ([]model.DevilFruit, error) {
+	var dfs []model.DevilFruit
 
-	db, err := sql.Open("mysql", cfg.FormatDSN())
+	rows, err := db.Query("SELECT id, name, type, awakened, user_id FROM devil_fruits")
 	if err != nil {
-		log.Fatal(err)
+		return nil, fmt.Errorf("devilFruits: %v", err)
 	}
-	if err := db.Ping(); err != nil {
-		log.Fatal(err)
+	defer rows.Close()
+
+	for rows.Next() {
+		var df model.DevilFruit
+		if err := rows.Scan(&df.ID, &df.Name, &df.Type, &df.Awakened, &df.UserID); err != nil {
+			return nil, fmt.Errorf("devilFruits scan: %v", err)
+		}
+		dfs = append(dfs, df)
 	}
-	fmt.Println("Connected to Characters DB!")
-	return db
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("devilFruits rows: %v", err)
+	}
+
+	return dfs, nil
 }
 
-func setupDevilFruitsDB() *sql.DB {
+func allCharacters() ([]model.Character, error) {
+	var chars []model.Character
+
+	rows, err := db.Query("SELECT id, name, age, status, race, origin, first_appearance, bounty, affiliation, haki, devil_fruit_id FROM characters")
+	if err != nil {
+		return nil, fmt.Errorf("characters: %v", err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var c model.Character
+		var status sql.NullString
+		var age sql.NullInt64
+		var race, origin, firstAppearance, bounty, affiliation sql.NullString
+		var hakiData sql.NullString
+		var devilFruitID sql.NullString
+
+		if err := rows.Scan(
+			&c.ID,
+			&c.Name,
+			&age,
+			&status,
+			&race,
+			&origin,
+			&firstAppearance,
+			&bounty,
+			&affiliation,
+			&hakiData,
+			&devilFruitID,
+		); err != nil {
+			return nil, fmt.Errorf("characters scan: %v", err)
+		}
+
+		// Handle nullable fields
+		if age.Valid {
+			ageInt := int(age.Int64)
+			c.Age = &ageInt
+		}
+		if status.Valid {
+			s := model.Status(status.String)
+			c.Status = &s
+		}
+		if race.Valid {
+			c.Race = &race.String
+		}
+		if origin.Valid {
+			c.Origin = &origin.String
+		}
+		if firstAppearance.Valid {
+			c.FirstAppearance = &firstAppearance.String
+		}
+		if bounty.Valid {
+			c.Bounty = &bounty.String
+		}
+		if affiliation.Valid {
+			c.Affiliation = &affiliation.String
+		}
+
+		if hakiData.Valid && hakiData.String != "" {
+			var haki []model.HakiType
+			if err := json.Unmarshal([]byte(hakiData.String), &haki); err == nil {
+				c.Haki = haki
+			}
+		}
+
+		if devilFruitID.Valid {
+			c.DevilFruitID = &devilFruitID.String
+		}
+
+		chars = append(chars, c)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("characters rows: %v", err)
+	}
+
+	return chars, nil
+}
+
+func characterByID(id string) (model.Character, error) {
+	var c model.Character
+	var status string     // temporary for scanning status
+	var hakiJSON []byte   // scan haki as bytes from DB
+	var age sql.NullInt64 // nullable int
+
+	row := db.QueryRow(`
+		SELECT id, name, age, status, race, origin, first_appearance, bounty, affiliation, haki, devil_fruit_id 
+		FROM characters WHERE id = ?`, id)
+
+	err := row.Scan(
+		&c.ID, &c.Name, &age, &status, &c.Race, &c.Origin, &c.FirstAppearance,
+		&c.Bounty, &c.Affiliation, &hakiJSON, &c.DevilFruitID,
+	)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return c, fmt.Errorf("characterByID %s: no such character", id)
+		}
+		return c, err
+	}
+
+	if age.Valid {
+		ageInt := int(age.Int64)
+		c.Age = &ageInt
+	} else {
+		c.Age = nil
+	}
+
+	s := model.Status(status)
+	c.Status = &s
+
+	if len(hakiJSON) > 0 {
+		var haki []model.HakiType
+		if err := json.Unmarshal(hakiJSON, &haki); err != nil {
+			return c, fmt.Errorf("failed to unmarshal haki JSON: %v", err)
+		}
+		c.Haki = haki
+	}
+
+	return c, nil
+}
+
+func setupDB() *sql.DB {
 	cfg := mysql.NewConfig()
 	cfg.User = "root"
 	cfg.Passwd = "bugs"
