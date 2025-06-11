@@ -13,19 +13,6 @@ import (
 
 var db *sql.DB
 
-// func characterByID(id int64) (model.Character, error) {
-// 	var c model.Character
-
-// 	row := dbCharacters.QueryRow("SELECT * FROM character WHERE id = ?", id)
-// 	if err := row.Scan(&c.ID, &c.Name, &c.Age, &c.Status, &c.Race, &c.Origin, &c.FirstAppearance, &c.Bounty, &c.Affiliation, &c.Haki, &c.DevilFruit); err != nil {
-// 		if err == sql.ErrNoRows {
-// 			return c, fmt.Errorf("albumsById %d: no such album", id)
-// 		}
-// 		return c, fmt.Errorf("albumsById %d: %v", id, err)
-// 	}
-// 	return c, nil
-// }
-
 func devilFruitByID(id string) (model.DevilFruit, error) {
 	var df model.DevilFruit
 
@@ -96,7 +83,6 @@ func allCharacters() ([]model.Character, error) {
 			return nil, fmt.Errorf("characters scan: %v", err)
 		}
 
-		// Handle nullable fields
 		if age.Valid {
 			ageInt := int(age.Int64)
 			c.Age = &ageInt
@@ -144,9 +130,9 @@ func allCharacters() ([]model.Character, error) {
 
 func characterByID(id string) (model.Character, error) {
 	var c model.Character
-	var status string     // temporary for scanning status
-	var hakiJSON []byte   // scan haki as bytes from DB
-	var age sql.NullInt64 // nullable int
+	var status string
+	var hakiJSON []byte
+	var age sql.NullInt64
 
 	row := db.QueryRow(`
 		SELECT id, name, age, status, race, origin, first_appearance, bounty, affiliation, haki, devil_fruit_id 
