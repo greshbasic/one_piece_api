@@ -1,0 +1,23 @@
+DROP TABLE IF EXISTS characters;
+
+CREATE TABLE characters (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,
+  bounty BIGINT DEFAULT NULL,
+  haki JSON DEFAULT NULL,
+  affiliation VARCHAR(255) DEFAULT NULL,
+  origin VARCHAR(255) DEFAULT NULL,
+  status VARCHAR(100) DEFAULT NULL,
+  age INT DEFAULT NULL
+);
+
+DROP TABLE IF EXISTS devil_fruits;
+
+CREATE TABLE devil_fruits (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,
+  type ENUM('paramecia', 'zoan', 'logia', 'ancient zoan', 'mythical zoan') NOT NULL,
+  awakened TINYINT(1) NOT NULL DEFAULT 0,
+  user_id BIGINT NULL,
+  CONSTRAINT fk_user_id FOREIGN KEY (user_id) REFERENCES characters(id) ON DELETE SET NULL
+);

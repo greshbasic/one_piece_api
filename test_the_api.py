@@ -5,31 +5,15 @@ def get_character(id):
     if get_response.status_code == 200:
         return get_response.json()
     else:
-        print("failed to fetch")
+        print(get_response.json())
         return
     
-def get_characters(): 
-    get_response = requests.get(character_url)
-    if get_response.status_code == 200:
-        return get_response.json()
-    else:
-        print("failed to fetch")
-        return
-        
-def get_devil_fruit(id):
+def get_df(id):
     get_response = requests.get(f"{df_url}/{id}")
     if get_response.status_code == 200:
         return get_response.json()
     else:
-        print("failed to fetch")
-        return
-        
-def get_devil_fruits():
-    get_response = requests.get(df_url)
-    if get_response.status_code == 200:
-        return get_response.json()
-    else:
-        print("failed to fetch")
+        print(get_response.json())
         return
 
 if __name__ == "__main__":
@@ -38,10 +22,10 @@ if __name__ == "__main__":
     
     id = input("Enter the ID: ")
     character = get_character(id)
-    devil_fruit_id = character.get('devil_fruit')
-    devil_fruit = get_devil_fruit(devil_fruit_id)
+    # df = get_df(id)
     
-    print(devil_fruit)
+    print(character)
+    # print(df)
     
     
 

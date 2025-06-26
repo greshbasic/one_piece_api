@@ -5,166 +5,105 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-
-	model "one-piece-api/models"
+	"one-piece-api/models"
 
 	"github.com/go-sql-driver/mysql"
 )
 
 var db *sql.DB
 
-func devilFruitByID(id string) (model.DevilFruit, error) {
-	var df model.DevilFruit
+func getDevilFruitByID(id int64) (models.DevilFruit, error) {
+	var df models.DevilFruit
+	var userID sql.NullInt64
 
-	row := db.QueryRow("SELECT id, name, type, awakened, user_id FROM devil_fruits WHERE id = ?", id)
-	if err := row.Scan(&df.ID, &df.Name, &df.Type, &df.Awakened, &df.UserID); err != nil {
+	query := `
+        SELECT id, name, type, awakened, user_id
+        FROM devil_fruits
+        WHERE id = ?`
+
+	err := db.QueryRow(query, id).Scan(&df.ID, &df.Name, &df.Type, &df.Awakened, &userID)
+	if err != nil {
 		if err == sql.ErrNoRows {
-			return df, fmt.Errorf("devilFruitByID %s: no such devil fruit", id)
+			return df, fmt.Errorf("devil fruit %d not found", id)
 		}
 		return df, err
 	}
+
+	if userID.Valid {
+		df.UserID = &userID.Int64
+	} else {
+		df.UserID = nil
+	}
+
 	return df, nil
 }
 
-func allDevilFruits() ([]model.DevilFruit, error) {
-	var dfs []model.DevilFruit
+func getCharacterByID(id int64) (models.Character, error) {
+	var c models.Character
 
-	rows, err := db.Query("SELECT id, name, type, awakened, user_id FROM devil_fruits")
-	if err != nil {
-		return nil, fmt.Errorf("devilFruits: %v", err)
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var df model.DevilFruit
-		if err := rows.Scan(&df.ID, &df.Name, &df.Type, &df.Awakened, &df.UserID); err != nil {
-			return nil, fmt.Errorf("devilFruits scan: %v", err)
-		}
-		dfs = append(dfs, df)
-	}
-
-	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("devilFruits rows: %v", err)
-	}
-
-	return dfs, nil
-}
-
-func allCharacters() ([]model.Character, error) {
-	var chars []model.Character
-
-	rows, err := db.Query("SELECT id, name, age, status, race, origin, first_appearance, bounty, affiliation, haki, devil_fruit_id FROM characters")
-	if err != nil {
-		return nil, fmt.Errorf("characters: %v", err)
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var c model.Character
-		var status sql.NullString
-		var age sql.NullInt64
-		var race, origin, firstAppearance, bounty, affiliation sql.NullString
-		var hakiData sql.NullString
-		var devilFruitID sql.NullString
-
-		if err := rows.Scan(
-			&c.ID,
-			&c.Name,
-			&age,
-			&status,
-			&race,
-			&origin,
-			&firstAppearance,
-			&bounty,
-			&affiliation,
-			&hakiData,
-			&devilFruitID,
-		); err != nil {
-			return nil, fmt.Errorf("characters scan: %v", err)
-		}
-
-		if age.Valid {
-			ageInt := int(age.Int64)
-			c.Age = &ageInt
-		}
-		if status.Valid {
-			s := model.Status(status.String)
-			c.Status = &s
-		}
-		if race.Valid {
-			c.Race = &race.String
-		}
-		if origin.Valid {
-			c.Origin = &origin.String
-		}
-		if firstAppearance.Valid {
-			c.FirstAppearance = &firstAppearance.String
-		}
-		if bounty.Valid {
-			c.Bounty = &bounty.String
-		}
-		if affiliation.Valid {
-			c.Affiliation = &affiliation.String
-		}
-
-		if hakiData.Valid && hakiData.String != "" {
-			var haki []model.HakiType
-			if err := json.Unmarshal([]byte(hakiData.String), &haki); err == nil {
-				c.Haki = haki
-			}
-		}
-
-		if devilFruitID.Valid {
-			c.DevilFruitID = &devilFruitID.String
-		}
-
-		chars = append(chars, c)
-	}
-
-	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("characters rows: %v", err)
-	}
-
-	return chars, nil
-}
-
-func characterByID(id string) (model.Character, error) {
-	var c model.Character
-	var status string
-	var hakiJSON []byte
+	var bounty sql.NullInt64
+	var hakiBytes sql.NullString
+	var affiliation, origin, status sql.NullString
 	var age sql.NullInt64
 
-	row := db.QueryRow(`
-		SELECT id, name, age, status, race, origin, first_appearance, bounty, affiliation, haki, devil_fruit_id 
-		FROM characters WHERE id = ?`, id)
+	var dfID sql.NullInt64
+	var dfName, dfType sql.NullString
+	var dfAwakened sql.NullBool
 
+	query := `
+        SELECT
+            c.id, c.name, c.bounty, c.haki, c.affiliation, c.origin, c.status, c.age,
+            d.id, d.name, d.type, d.awakened
+        FROM characters c
+        LEFT JOIN devil_fruits d ON d.user_id = c.id
+        WHERE c.id = ?`
+
+	row := db.QueryRow(query, id)
 	err := row.Scan(
-		&c.ID, &c.Name, &age, &status, &c.Race, &c.Origin, &c.FirstAppearance,
-		&c.Bounty, &c.Affiliation, &hakiJSON, &c.DevilFruitID,
+		&c.ID, &c.Name, &bounty, &hakiBytes, &affiliation, &origin, &status, &age,
+		&dfID, &dfName, &dfType, &dfAwakened,
 	)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return c, fmt.Errorf("characterByID %s: no such character", id)
+			return c, fmt.Errorf("character %d not found", id)
 		}
 		return c, err
 	}
 
+	if bounty.Valid {
+		c.Bounty = &bounty.Int64
+	}
+
+	if hakiBytes.Valid {
+		var hakiMap models.Haki
+		if err := json.Unmarshal([]byte(hakiBytes.String), &hakiMap); err == nil {
+			c.Haki = &hakiMap
+		} else {
+			// Optional: log or handle JSON unmarshal error
+		}
+	}
+
+	if affiliation.Valid {
+		c.Affiliation = &affiliation.String
+	}
+	if origin.Valid {
+		c.Origin = &origin.String
+	}
+	if status.Valid {
+		c.Status = &status.String
+	}
 	if age.Valid {
 		ageInt := int(age.Int64)
 		c.Age = &ageInt
-	} else {
-		c.Age = nil
 	}
 
-	s := model.Status(status)
-	c.Status = &s
-
-	if len(hakiJSON) > 0 {
-		var haki []model.HakiType
-		if err := json.Unmarshal(hakiJSON, &haki); err != nil {
-			return c, fmt.Errorf("failed to unmarshal haki JSON: %v", err)
+	if dfID.Valid {
+		c.DevilFruit = &models.DevilFruit{
+			ID:       dfID.Int64,
+			Name:     dfName.String,
+			Type:     dfType.String,
+			Awakened: dfAwakened.Bool,
 		}
-		c.Haki = haki
 	}
 
 	return c, nil
@@ -176,7 +115,7 @@ func setupDB() *sql.DB {
 	cfg.Passwd = "bugs"
 	cfg.Net = "tcp"
 	cfg.Addr = "127.0.0.1:3306"
-	cfg.DBName = "devil_fruits"
+	cfg.DBName = "one_piece_data"
 
 	db, err := sql.Open("mysql", cfg.FormatDSN())
 	if err != nil {
@@ -185,6 +124,6 @@ func setupDB() *sql.DB {
 	if err := db.Ping(); err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println("Connected to Devil Fruits DB!")
+	fmt.Println("Connected to Punk Records DB!")
 	return db
 }
