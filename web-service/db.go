@@ -78,8 +78,6 @@ func getCharacterByID(id int64) (models.Character, error) {
 		var hakiMap models.Haki
 		if err := json.Unmarshal([]byte(hakiBytes.String), &hakiMap); err == nil {
 			c.Haki = &hakiMap
-		} else {
-			// Optional: log or handle JSON unmarshal error
 		}
 	}
 
