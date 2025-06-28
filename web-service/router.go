@@ -24,6 +24,16 @@ func getCharacterHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, character)
 }
 
+func getAllCharactersHandler(c *gin.Context) {
+	characters, err := getAllCharacters()
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, characters)
+}
+
 func getDevilFruitHandler(c *gin.Context) {
 	idStr := c.Param("id")
 	id, err := strconv.ParseInt(idStr, 10, 64)
@@ -44,7 +54,9 @@ func getDevilFruitHandler(c *gin.Context) {
 func router_setup() {
 	router := gin.Default()
 
+	router.GET("/characters", getAllCharactersHandler)
 	router.GET("/characters/:id", getCharacterHandler)
+
 	router.GET("/devil_fruits/:id", getDevilFruitHandler)
 
 	router.Run("localhost:8080")

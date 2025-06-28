@@ -107,6 +107,85 @@ func getCharacterByID(id int64) (models.Character, error) {
 	return c, nil
 }
 
+func getAllCharacters() ([]models.Character, error) {
+	var characters []models.Character
+
+	query := `
+        SELECT
+            c.id, c.name, c.bounty, c.haki, c.affiliation, c.origin, c.status, c.age,
+            d.id, d.name, d.type, d.awakened
+        FROM characters c
+        LEFT JOIN devil_fruits d ON d.user_id = c.id
+    `
+
+	rows, err := db.Query(query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var c models.Character
+
+		var bounty sql.NullInt64
+		var hakiBytes sql.NullString
+		var affiliation, origin, status sql.NullString
+		var age sql.NullInt64
+
+		var dfID sql.NullInt64
+		var dfName, dfType sql.NullString
+		var dfAwakened sql.NullBool
+
+		err := rows.Scan(
+			&c.ID, &c.Name, &bounty, &hakiBytes, &affiliation, &origin, &status, &age,
+			&dfID, &dfName, &dfType, &dfAwakened,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		if bounty.Valid {
+			c.Bounty = &bounty.Int64
+		}
+		if hakiBytes.Valid {
+			var hakiMap models.Haki
+			if err := json.Unmarshal([]byte(hakiBytes.String), &hakiMap); err == nil {
+				c.Haki = &hakiMap
+			}
+		}
+		if affiliation.Valid {
+			c.Affiliation = &affiliation.String
+		}
+		if origin.Valid {
+			c.Origin = &origin.String
+		}
+		if status.Valid {
+			c.Status = &status.String
+		}
+		if age.Valid {
+			ageInt := int(age.Int64)
+			c.Age = &ageInt
+		}
+
+		if dfID.Valid {
+			c.DevilFruit = &models.DevilFruit{
+				ID:       dfID.Int64,
+				Name:     dfName.String,
+				Type:     dfType.String,
+				Awakened: dfAwakened.Bool,
+			}
+		}
+
+		characters = append(characters, c)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return characters, nil
+}
+
 func setupDB() *sql.DB {
 	cfg := mysql.NewConfig()
 	cfg.User = "root"
@@ -122,6 +201,7 @@ func setupDB() *sql.DB {
 	if err := db.Ping(); err != nil {
 		log.Fatal(err)
 	}
+
 	fmt.Println("Connected to Punk Records DB!")
 	return db
 }
