@@ -1,7 +1,10 @@
-<h1>
-  Punk Records API:
-  A One Piece API + Backend
-</h1>
+<div align="center">
+<h1>Punk Records API: A One Piece API + Backend </h1>
+<img src="https://github.com/user-attachments/assets/c6e798c2-e03b-4f42-aa6a-3adbd1158804"
+  height=200
+  width=350
+>
+</div>
 
 <h2>How to Use</h2>
 
