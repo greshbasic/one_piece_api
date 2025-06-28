@@ -363,11 +363,11 @@ func getAllArtifacts() ([]models.Artifact, error) {
 
 func setupDB() *sql.DB {
 	cfg := mysql.NewConfig()
-	cfg.User = "root"
-	cfg.Passwd = "bugs"
-	cfg.Net = "tcp"
-	cfg.Addr = "127.0.0.1:3306"
-	cfg.DBName = "one_piece_data"
+	cfg.User = ""
+	cfg.Passwd = ""
+	cfg.Net = ""
+	cfg.Addr = ""
+	cfg.DBName = ""
 
 	db, err := sql.Open("mysql", cfg.FormatDSN())
 	if err != nil {
