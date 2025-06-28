@@ -34,3 +34,18 @@
     <pre><code>python test_the_api.py</code></pre>
   </li>
 </ol>
+
+<h3>The currently available routes are:</h3>
+<ul>
+  <li><code>/characters</code></li>
+  <li><code>/characters/id</code></li>
+  
+  <li><code>/devil_fruits</code></li>
+  <li><code>/devil_fruits/id</code></li>
+
+  <li><code>/locations</code></li>
+  <li><code>/locations/id</code></li>
+
+  <li><code>/artifacts</code></li>
+  <li><code>/artifacts/id</code></li>
+</ol>
