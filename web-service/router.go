@@ -51,12 +51,23 @@ func getDevilFruitHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, df)
 }
 
+func getAllDevilFruitsHandler(c *gin.Context) {
+	dfs, err := getAllDevilFruits()
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, dfs)
+}
+
 func router_setup() {
 	router := gin.Default()
 
 	router.GET("/characters", getAllCharactersHandler)
 	router.GET("/characters/:id", getCharacterHandler)
 
+	router.GET("/devil_fruits", getAllDevilFruitsHandler)
 	router.GET("/devil_fruits/:id", getDevilFruitHandler)
 
 	router.Run("localhost:8080")

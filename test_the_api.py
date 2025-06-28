@@ -26,6 +26,14 @@ def test_get_all_char():
         pretty_print_character(character)
 
     return characters
+
+def test_get_all_df():
+    dfs = get(df_url)
+    
+    for df in dfs:
+        pretty_print_df(df)
+        
+    return dfs
     
 def test_get_df():
     id = input("Enter the ID: ")
@@ -36,13 +44,13 @@ def test_get_df():
 
 def pretty_print_character(char):
     print(f"{'=' * 40}")
-    print(f"Name: {char.name}")
-    print(f"ID: {char.id}")
-    print(f"Age: {char.age}")
+    print(f"Name: {char.get('name')}")
+    print(f"ID: {char.get('id')}")
+    print(f"Age: {char.get('age')}")
     print(f"Bounty: {char.get('bounty'):,} Berries" if char.get("bounty") else "Bounty: N/A")
-    print(f"Affiliation: {char.affiliation}")
-    print(f"Origin: {char.origin}")
-    print(f"Status: {char.status}")
+    print(f"Affiliation: {char.get('affiliation')}")
+    print(f"Origin: {char.get('origin')}")
+    print(f"Status: {char.get('status')}")
 
     haki = char.get("haki")
     if haki:
@@ -75,6 +83,9 @@ if __name__ == "__main__":
     
     test_get_all_char()
     # test_get_char()
+    
+    # test_get_all_df()
+    # test_get_df()
     
     
     

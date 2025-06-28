@@ -186,6 +186,45 @@ func getAllCharacters() ([]models.Character, error) {
 	return characters, nil
 }
 
+func getAllDevilFruits() ([]models.DevilFruit, error) {
+	var devilFruits []models.DevilFruit
+
+	query := `
+        SELECT id, name, type, awakened, user_id
+        FROM devil_fruits
+    `
+
+	rows, err := db.Query(query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var df models.DevilFruit
+		var userID sql.NullInt64
+
+		err := rows.Scan(&df.ID, &df.Name, &df.Type, &df.Awakened, &userID)
+		if err != nil {
+			return nil, err
+		}
+
+		if userID.Valid {
+			df.UserID = &userID.Int64
+		} else {
+			df.UserID = nil
+		}
+
+		devilFruits = append(devilFruits, df)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return devilFruits, nil
+}
+
 func setupDB() *sql.DB {
 	cfg := mysql.NewConfig()
 	cfg.User = "root"
