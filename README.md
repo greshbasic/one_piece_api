@@ -4,7 +4,7 @@
 
 <h3>Setting up the database:</h3>
 <ol>
-  <li>Connect to the MySQL CLI and create a database, I called mine <code>one_piece_data</code> (you will need to reflect any changes in <code>setupDB()</code> in <code>db.go</code>).</li>
+  <li>Connect to the MySQL CLI and create a database (you will need to reflect your choices in <code>setupDB()</code> in <code>db.go</code>).</li>
   <li>Run the <code>db/schema.sql</code> script in the MySQL CLI.</li>
   <li>Run the <code>db/inserts.sql</code> script in the MySQL CLI.</li>
 </ol>
