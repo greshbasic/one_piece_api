@@ -20,7 +20,7 @@
   <li>Create a virtual environment:
     <pre><code>python -m venv &lt;venv_name&gt;</code></pre>
   </li>
-  <li>Activate the virtual environment.</li></ol>
+  <li>Activate the virtual environment.</li>
   <li>Install dependencies:
     <pre><code>pip install requests</code></pre>
   </li>
