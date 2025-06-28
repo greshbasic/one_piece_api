@@ -1,4 +1,7 @@
-<h1>One Piece API + Backend</h1>
+<h1>
+  Punk Records API:
+  A One Piece API + Backend
+</h1>
 
 <h2>How to Use</h2>
 
