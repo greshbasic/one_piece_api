@@ -21,7 +21,7 @@
   <li>Navigate to <code>/web-service</code> and run <code>go run .</code> in your terminal.</li>
 </ol>
 
-<h3>Optionally, you can use my pre-made tests:</h3>
+<h3>Optionally, you can use my pre-made "tests":</h3>
 <ol>
   <li>Create a virtual environment:
     <pre><code>python -m venv &lt;venv_name&gt;</code></pre>
