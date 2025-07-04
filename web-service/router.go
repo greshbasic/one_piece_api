@@ -118,6 +118,8 @@ func getAllArtifactsHandler(c *gin.Context) {
 func router_setup() {
 	router := gin.Default()
 
+	router.Use(rateLimitHandler())
+
 	router.GET("/characters", getAllCharactersHandler)
 	router.GET("/characters/:id", getCharacterHandler)
 
